@@ -76,6 +76,10 @@ class Node:
 			n += self.M
 		return a < n < b
 
+	def delete(self):
+		self.predecessor.successor = self.successor
+		self.successor.predecessor = self.predecessor
+
 	def printFingerTable(self):
 		for finger in self.finger:
 			print (finger.start, finger.node.key)
