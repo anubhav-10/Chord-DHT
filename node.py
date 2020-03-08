@@ -21,7 +21,7 @@ class Node:
 		self.updateOthers()
 
 	def initializeFingerTable(self, node):
-		self.finger[0].node = node.findSuccessor(self.key)
+		self.finger[0].node = node.findSuccessor(self.key, [])
 		self.successor = self.finger[0].node
 		self.predecessor = self.successor.predecessor
 		self.successor.predecessor = self
@@ -33,13 +33,14 @@ class Node:
 			if self.finger[i].start == self.successor.key or self.inBetween(self.finger[i].start, self.key, self.successor.key):
 				self.finger[i].node = self.successor
 			else:
-				self.finger[i].node = node.findSuccessor(self.finger[i].start)
+				self.finger[i].node = node.findSuccessor(self.finger[i].start, [])
 
 	def updateOthers(self):
 		for i in range(self.m):
-			pred = self.findSuccessor((self.key - 2 ** (i)) % self.M)
+			temp = (self.key - 2 ** (i)) % self.M
+			pred = self.findSuccessor(temp, [])
 			# pred = self.findPredecessor(self.key - 2 ** (i))
-			if pred.key != (self.key - 2 ** (i)) % self.M:
+			if pred.key != temp:
 				pred = pred.predecessor
 			pred.updateFingerTable(self, i)
 
@@ -49,7 +50,7 @@ class Node:
 			p = self.predecessor
 			p.updateFingerTable(node, i)
 
-	def findSuccessor(self, key):
+	def findSuccessor(self, key, hops):
 		if (self.key == key):
 			return self
 		# elif (self.successor.key == key):
@@ -57,12 +58,13 @@ class Node:
 		elif self.successor.key == key or self.inBetween(key, self.key, self.successor.key):
 			return self.successor
 		else:
-			return self.closestPreceedingFinger(key)
+			hops.append(self.key)
+			return self.closestPreceedingFinger(key, hops)
 
-	def closestPreceedingFinger(self, key):
+	def closestPreceedingFinger(self, key, hops):
 		for i in range(self.m - 1, -1, -1):
 			if self.inBetween(self.finger[i].node.key, self.key, key):
-				return self.finger[i].node.findSuccessor(key)
+				return self.finger[i].node.findSuccessor(key, hops)
 
 		return self
 

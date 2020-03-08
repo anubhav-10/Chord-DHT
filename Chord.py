@@ -1,12 +1,14 @@
 from node import Node
 import sys
 import random
+from collections import Counter
 
 nodes = []
-m = 8
+keys = []
+m = 32
 
 def addNode():
-	new_node = Node(8)
+	new_node = Node(m)
 	if len(nodes) != 0:
 		random_node = random.choice(nodes)
 		new_node.join(random_node)
@@ -14,59 +16,50 @@ def addNode():
 
 def lookup(key):
 	random_node = random.choice(nodes)
-	succ = random_node.findSuccessor(key)
-	if key in succ.hashTable:
-		return succ.hashTable[key]
-	return None
+	hops = []
+	succ = random_node.findSuccessor(key, hops)
+	if key not in succ.hashTable:
+		return None, hops
+	return succ.hashTable[key], hops
 
 def deleteNode(node):
 	node.delete()
 	nodes.remove(node)
 	for n in nodes:
 		for f in n.finger:
-			f.node = f.node.findSuccessor(f.start)
+			f.node = f.node.findSuccessor(f.start, [])
 
-def routeMessage(data):
+def routeMessage(data = None):
 	key = random.randint(0, 2**m - 1)
 	random_node = random.choice(nodes)
-	succ = random_node.findSuccessor(key)
+	succ = random_node.findSuccessor(key, [])
+	if data == None:
+		data = hex(random.randint(0, 2**(32) - 1))[2:]
 	succ.hashTable[key] = data
+	keys.append(key)
 	return key
 
-for i in range(int(sys.argv[1])):
-	addNode()
+def route_multiple_msg(num):
+	for i in range(num):
+		routeMessage()
 
-# for node in nodes:
-# 	node.printNode()
-def test1(nums):
-	for i in range(5):
-		random_node = random.choice(nodes)
-		deleteNode(random_node)
-	keys = []
+def remove_random_node():
+	random_node = random.choice(nodes)
+	deleteNode(random_node)
 
-	i = 0
-	while(i < nums):
-		key = routeMessage(i)
-		if(key == None):
-			print("Duplicate key")
-		else:
-			keys.append(key)
-			i+=1
+def add_multiple_nodes(num):
+	for i in range(num):
+		addNode()
 
-	# for i in range(nums):
-	# key = chord.addMsg(i)
-	# if(key == None):
-	# print("Dupicate key")
-	# i-=1
-	# else:
-	# keys.append(key)
+def remove_multiple_nodes(num):
+	for i in range(num):
+		remove_random_node()
+		print ("Deleted: " + str(i))
 
-	for i in range(nums):
-		if(lookup(keys[i]) == i):
-			print("Lookup: {} {} {}".format(keys[i], i, True))
-			pass
-		else:
-			print("Lookup: {} {}".format(i, False))
-			break
+def print_hops(hops, key):
+	print ('Look up for ' + str(key) + ':', end = ' ')
+	for i in hops:
+		print (i, end = ' -> ')
 
-test1(10)
+	print()
+
